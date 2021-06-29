@@ -9,7 +9,7 @@ import java.util.*
 import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
-
+val TAG = "TAGTAG"
     lateinit var campaignDatabase: TestDatabase
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -19,72 +19,75 @@ class MainActivity : AppCompatActivity() {
 
         insertModel1()
         insertModel2()
-
-        tetGetAllModel1()
-        tetGetAllModel2()
-
+        testGetAllModel1()
+        testGetAllModel2()
         testGet(id = "1624954922850")
 
 
     }
 
-    private fun tetGetAllModel2() {
+    private fun testGetAllModel2() {
         handler {
-            val provider2 = RoomProvider(TestModel2::class.java)
-            val list2 = provider2.getAll()
-            Log.d("TAGTAG", "onCreate: provider.getAll() list2 ${list2.toString()}")
+            val provider2 = RoomProvider()
+            val list2 = provider2.getAll(TestModel2::class.java)
+            Log.d(TAG, "onCreate: provider.getAll() list2 ${list2.toString()}")
         }
     }
 
-    private fun tetGetAllModel1() {
+    private fun testGetAllModel1() {
         handler {
-            val provider = RoomProvider(TestModel1::class.java)
-            val list = provider.getAll()
+            val provider = RoomProvider()
+            val list = provider.getAll(TestModel1::class.java)
             list
-            Log.d("TAGTAG", "onCreate: provider.getAll() list1 ${list.toString()}")
+            Log.d(TAG, "onCreate: provider.getAll() list1 ${list.toString()}")
         }
     }
 
     private fun testGet(id: String) {
         handler {
-            val provider = RoomProvider(TestModel1::class.java)
-            val v =  provider.get(id)
-            Log.d("TAGTAG", "onCreate: provider.get ${v.toString()}")
+            val provider = RoomProvider()
+            val v =  provider.get(TestModel1::class.java, id)
+            Log.d(TAG, "onCreate: provider.get ${v.toString()}")
         }
     }
 
     private fun insertModel2() {
-        handler {
-            val provider = RoomProvider(TestModel2::class.java)
-            provider.apply {
-                deleteAll()
 
-                insert(getTestObject2())
-                insert(getTestObject2())
-                insert(getTestObject2())
-                insert(getTestObject2())
-                insert(getTestObject2())
-                insert(getTestObject2())
-                insert(getTestObject2())
+        val clazz = TestModel2::class.java
+        handler {
+            val provider = RoomProvider()
+            provider.apply {
+
+                insertAll(clazz,listOf(getTestObject2(), getTestObject2(), getTestObject2(), getTestObject2()))
+
+//                deleteAll(clazz)
+                return@handler
+
+                insert(clazz, getTestObject2())
+                insert(clazz, getTestObject2())
+                insert(clazz, getTestObject2())
+                insert(clazz, getTestObject2())
+                insert(clazz, getTestObject2())
+                insert(clazz, getTestObject2())
+                insert(clazz, getTestObject2())
             }
         }
     }
 
     private fun insertModel1() {
+        val clazz = TestModel1::class.java
         handler {
-            val provider1 = RoomProvider(TestModel1::class.java)
-
-            provider1.apply {
-                deleteAll()
-
-                insert(getTestObject())
-                insert(getTestObject())
-                insert(getTestObject())
-                insert(getTestObject())
-                insert(getTestObject())
-                insert(getTestObject())
-                insert(getTestObject())
-
+            val provider = RoomProvider()
+            provider.apply {
+//deleteAll(clazz)
+//return@handler
+                insert(clazz, getTestObject())
+                insert(clazz, getTestObject())
+                insert(clazz, getTestObject())
+                insert(clazz, getTestObject())
+                insert(clazz, getTestObject())
+                insert(clazz, getTestObject())
+                insert(clazz, getTestObject())
             }
         }
     }
@@ -92,37 +95,85 @@ class MainActivity : AppCompatActivity() {
 
 }
 
-interface BaseLocalDataSource<T>{
-    fun getAll(): List<T>
-    fun deleteAll()
-    fun insert(obj: T)
-    fun get(id: String) : T
-    fun insertAll(obj: List<T>)
-
+sealed class DataBaseParams<T>{
+    class Insert<T>(obj: T): DataBaseParams<T>()
+    class insertAll<T>(obj: List<T>): DataBaseParams<T>()
 }
 
-class RoomProvider<T>(val clazz: Class<T>): BaseLocalDataSource<T> {
+interface BaseLocalDataSource{
+    fun <T> get(clazz: Class<T>, id: String) : T
+    fun <T> insert(clazz: Class<T>, obj: T)
+    fun <T> insertAll(clazz: Class<T>, obj: List<T>)
+    fun <T> getAll(clazz: Class<T>): List<T>
+    fun <T> delete(clazz: Class<T>, id: String)
+    fun <T> deleteAll(clazz: Class<T>)
+}
+
+class RoomProvider(): BaseLocalDataSource {
     val db = TestDatabaseInstance.mInstance
 
-    val dao by lazy {
-        getBaseDao()
-    }
-
-    override fun getAll(): List<T> {
+    override fun<T> getAll(clazz: Class<T>): List<T> {
+        val dao  = getBaseDao(clazz)
         return dao.getAll()
     }
 
-    override fun insert(obj: T){
+    override fun <T> deleteAll(clazz: Class<T>) {
+        val dao  = getBaseDao(clazz)
+        dao.deleteAll()
+    }
+
+    override fun <T> insert(clazz: Class<T>, obj: T) {
+        val dao  = getBaseDao(clazz)
         dao.insert(obj)
     }
 
-    override fun insertAll(objList: List<T>){
-        dao.insertAll(objList)
+
+    override fun <T> get(clazz: Class<T>, id: String): T {
+        val dao  = getBaseDao(clazz)
+        return dao.get(id)
+    }
+
+    override fun <T> delete(clazz: Class<T>, id: String) {
+        val dao  = getBaseDao(clazz)
+        dao.delete(id)
+    }
+
+    override fun <T> insertAll(clazz: Class<T>, obj: List<T>) {
+        val dao  = getBaseDao(clazz)
+        dao.insertAll(obj)
+    }
+
+    class Provider2(): BaseLocalDataSource{
+        override fun <T> get(clazz: Class<T>, id: String): T {
+            TODO("Not yet implemented")
+        }
+
+        override fun <T> insert(clazz: Class<T>, obj: T) {
+            TODO("Not yet implemented")
+        }
+
+        override fun <T> insertAll(clazz: Class<T>, obj: List<T>) {
+            TODO("Not yet implemented")
+        }
+
+        override fun <T> getAll(clazz: Class<T>): List<T> {
+            TODO("Not yet implemented")
+        }
+
+        override fun <T> delete(clazz: Class<T>, id: String) {
+            TODO("Not yet implemented")
+        }
+
+        override fun <T> deleteAll(clazz: Class<T>) {
+            TODO("Not yet implemented")
+        }
+
     }
 
 
+
     //dao factory
-    private fun getBaseDao(): BaseDao<T>{
+    private fun<T> getBaseDao(clazz: Class<T>): BaseDao<T>{
         return when (clazz.name) {
             TestModel1::class.java.name -> db.testDao() as BaseDao<T>
             TestModel2::class.java.name -> db.testDao2() as BaseDao<T>
@@ -131,13 +182,7 @@ class RoomProvider<T>(val clazz: Class<T>): BaseLocalDataSource<T> {
         }
     }
 
-    override fun get(id: String): T {
-        return dao.get(id)
-    }
 
-    override fun deleteAll() {
-        dao.deleteAll()
-    }
 
 }
 
@@ -147,6 +192,7 @@ interface BaseDao<T>{
     @Insert @JvmSuppressWildcards
     fun insertAll(campaigns: List<T?>?)
     fun deleteAll()
+    fun delete(id2: String)
     fun getAll(): List<T>
     @Query("select * from TestModel1 where id =:id2")
     fun get(id2: String): T
@@ -167,6 +213,10 @@ interface TestDao: BaseDao<TestModel1> {
     @Query("select * from TestModel1")
     override fun getAll(): List<TestModel1>
 
+    @Query("DELETE FROM TestModel1 where id=:id")
+    override fun delete(id: String)
+
+
 }
 
 @Dao
@@ -186,6 +236,8 @@ interface TestDao2: BaseDao<TestModel2> {
     @Query("select * from TestModel2 where id =:id2")
     override fun get(id2: String): TestModel2
 
+    @Query("DELETE FROM TestModel2 where id=:id")
+    override fun delete(id: String)
 }
 
 
