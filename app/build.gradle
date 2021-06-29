@@ -3,6 +3,7 @@ plugins {
     id 'kotlin-android'
 }
 apply plugin: 'kotlin-kapt'
+apply plugin: 'realm-android'
 
 android {
     compileSdkVersion 30
@@ -33,6 +34,10 @@ android {
     }
 }
 
+realm {
+    syncEnabled = true
+}
+
 dependencies {
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
@@ -57,4 +62,12 @@ dependencies {
 
     // optional - Test helpers
     testImplementation "androidx.room:room-testing:$room_version"
+
+
+    api "io.realm:realm-annotations:$realm_version"
+//    api "io.realm:realm-android-library:$realm_version"
+//    api "io.realm:realm-android-kotlin-extensions:$realm_version"
+//    kapt "io.realm:realm-annotations-processor:$realm_version"
+
+
 }

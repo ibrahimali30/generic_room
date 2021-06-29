@@ -4,18 +4,22 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import androidx.room.*
+import io.realm.Realm
 import java.lang.Exception
 import java.util.*
 import java.util.concurrent.Executors
 
-class MainActivity : AppCompatActivity() {
 val TAG = "TAGTAG"
+
+class MainActivity : AppCompatActivity() {
     lateinit var campaignDatabase: TestDatabase
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         TestDatabaseInstance.init(this)
+        Realm.init(getApplicationContext());
 
+        RealmTest()
 
         insertModel1()
         insertModel2()
@@ -143,32 +147,6 @@ class RoomProvider(): BaseLocalDataSource {
         dao.insertAll(obj)
     }
 
-    class Provider2(): BaseLocalDataSource{
-        override fun <T> get(clazz: Class<T>, id: String): T {
-            TODO("Not yet implemented")
-        }
-
-        override fun <T> insert(clazz: Class<T>, obj: T) {
-            TODO("Not yet implemented")
-        }
-
-        override fun <T> insertAll(clazz: Class<T>, obj: List<T>) {
-            TODO("Not yet implemented")
-        }
-
-        override fun <T> getAll(clazz: Class<T>): List<T> {
-            TODO("Not yet implemented")
-        }
-
-        override fun <T> delete(clazz: Class<T>, id: String) {
-            TODO("Not yet implemented")
-        }
-
-        override fun <T> deleteAll(clazz: Class<T>) {
-            TODO("Not yet implemented")
-        }
-
-    }
 
 
 

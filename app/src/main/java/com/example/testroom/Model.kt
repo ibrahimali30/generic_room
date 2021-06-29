@@ -2,6 +2,7 @@ package com.example.testroom
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import io.realm.RealmObject
 
 
 @Entity
