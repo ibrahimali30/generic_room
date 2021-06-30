@@ -3,45 +3,74 @@ package com.example.testroom
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.widget.TextView
 import androidx.room.*
+import com.example.testroom.local_data_base.base.BaseLocalDataSource
+import com.example.testroom.local_data_base.realm.RealmProvider
+import com.example.testroom.local_data_base.room.RoomProvider
+import com.example.testroom.local_data_base.room.TestDatabaseInstance
 import io.realm.Realm
-import java.lang.Exception
+import io.realm.RealmConfiguration
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.lang.StringBuilder
 import java.util.*
 import java.util.concurrent.Executors
+import kotlin.concurrent.thread
 
 val TAG = "TAGTAG"
 
 class MainActivity : AppCompatActivity() {
-    lateinit var campaignDatabase: TestDatabase
+
+    object RealmSingeleton{
+        val config by lazy {
+            RealmConfiguration.Builder()
+                .allowQueriesOnUiThread(true)
+                .allowWritesOnUiThread(true)
+                .build()
+        }
+        val realm = Realm.getInstance(config)
+    }
+
+
+//    val className = TestModel1::class.java
+    val className = TestModel2Realm::class.java
+
+
+    lateinit var provider: BaseLocalDataSource
+
+//    fun getTestObject2Realm() = TestModel1(getCalenderString(), "TestObject1 description")
+    fun getTestObject2() = TestModel2(getCalenderString(), "TestObject2 description")
+fun getTestObject2Realm() = TestModel2Realm( "TestObject2 description")
+//fun getTestObject2Realm() = Frog("name",1,species = "species",owner = "owner")
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         TestDatabaseInstance.init(this)
         Realm.init(getApplicationContext());
 
-        RealmTest()
-
-        insertModel1()
-        insertModel2()
-        testGetAllModel1()
-        testGetAllModel2()
-        testGet(id = "1624954922850")
-
-
-    }
-
-    private fun testGetAllModel2() {
         handler {
-            val provider2 = RoomProvider()
-            val list2 = provider2.getAll(TestModel2::class.java)
-            Log.d(TAG, "onCreate: provider.getAll() list2 ${list2.toString()}")
+            provider  = RealmProvider(RealmSingeleton.realm)
+//            provider  = RoomProvider()
         }
+
+//        RealmTest(provider)
+
+//        insertModel1()
+//        testGetAllModel1()
+//        testGet(id = "262efa34-0bdf-4ffa-a22c-ec72bb3c6871")
+
+
     }
+
 
     private fun testGetAllModel1() {
         handler {
-            val provider = RoomProvider()
-            val list = provider.getAll(TestModel1::class.java)
+            val list = provider.getAll(className)
             list
             Log.d(TAG, "onCreate: provider.getAll() list1 ${list.toString()}")
         }
@@ -49,189 +78,81 @@ class MainActivity : AppCompatActivity() {
 
     private fun testGet(id: String) {
         handler {
-            val provider = RoomProvider()
-            val v =  provider.get(TestModel1::class.java, id)
+            val v =  provider.get(className, id)
             Log.d(TAG, "onCreate: provider.get ${v.toString()}")
         }
     }
 
-    private fun insertModel2() {
-
-        val clazz = TestModel2::class.java
-        handler {
-            val provider = RoomProvider()
-            provider.apply {
-
-                insertAll(clazz,listOf(getTestObject2(), getTestObject2(), getTestObject2(), getTestObject2()))
-
-//                deleteAll(clazz)
-                return@handler
-
-                insert(clazz, getTestObject2())
-                insert(clazz, getTestObject2())
-                insert(clazz, getTestObject2())
-                insert(clazz, getTestObject2())
-                insert(clazz, getTestObject2())
-                insert(clazz, getTestObject2())
-                insert(clazz, getTestObject2())
-            }
-        }
-    }
 
     private fun insertModel1() {
-        val clazz = TestModel1::class.java
+        val clazz = className
         handler {
-            val provider = RoomProvider()
+//            val provider = RealmProvider(realm)
             provider.apply {
-//deleteAll(clazz)
-//return@handler
-                insert(clazz, getTestObject())
-                insert(clazz, getTestObject())
-                insert(clazz, getTestObject())
-                insert(clazz, getTestObject())
-                insert(clazz, getTestObject())
-                insert(clazz, getTestObject())
-                insert(clazz, getTestObject())
+deleteAll(clazz)
+return@handler
+                insert(clazz, getTestObject2Realm())
+                insert(clazz, getTestObject2Realm())
+                insert(clazz, getTestObject2Realm())
+                insert(clazz, getTestObject2Realm())
+                insert(clazz, getTestObject2Realm())
+                insert(clazz, getTestObject2Realm())
+                insert(clazz, getTestObject2Realm())
             }
         }
     }
 
-
-}
-
-sealed class DataBaseParams<T>{
-    class Insert<T>(obj: T): DataBaseParams<T>()
-    class insertAll<T>(obj: List<T>): DataBaseParams<T>()
-}
-
-interface BaseLocalDataSource{
-    fun <T> get(clazz: Class<T>, id: String) : T
-    fun <T> insert(clazz: Class<T>, obj: T)
-    fun <T> insertAll(clazz: Class<T>, obj: List<T>)
-    fun <T> getAll(clazz: Class<T>): List<T>
-    fun <T> delete(clazz: Class<T>, id: String)
-    fun <T> deleteAll(clazz: Class<T>)
-}
-
-class RoomProvider(): BaseLocalDataSource {
-    val db = TestDatabaseInstance.mInstance
-
-    override fun<T> getAll(clazz: Class<T>): List<T> {
-        val dao  = getBaseDao(clazz)
-        return dao.getAll()
+    fun insert(view: View) = handler {
+        provider.insert(className, getTestObject2Realm())
     }
-
-    override fun <T> deleteAll(clazz: Class<T>) {
-        val dao  = getBaseDao(clazz)
-        dao.deleteAll()
+    fun deleteAll(view: View) = handler {
+        provider.deleteAll(className)
     }
+    fun getAll(view: View) = handler {
 
-    override fun <T> insert(clazz: Class<T>, obj: T) {
-        val dao  = getBaseDao(clazz)
-        dao.insert(obj)
-    }
+        val list = provider.getAll(className)
 
+        val str = StringBuilder()
 
-    override fun <T> get(clazz: Class<T>, id: String): T {
-        val dao  = getBaseDao(clazz)
-        return dao.get(id)
-    }
-
-    override fun <T> delete(clazz: Class<T>, id: String) {
-        val dao  = getBaseDao(clazz)
-        dao.delete(id)
-    }
-
-    override fun <T> insertAll(clazz: Class<T>, obj: List<T>) {
-        val dao  = getBaseDao(clazz)
-        dao.insertAll(obj)
-    }
-
-
-
-
-    //dao factory
-    private fun<T> getBaseDao(clazz: Class<T>): BaseDao<T>{
-        return when (clazz.name) {
-            TestModel1::class.java.name -> db.testDao() as BaseDao<T>
-            TestModel2::class.java.name -> db.testDao2() as BaseDao<T>
-
-            else -> throw Exception("no impl for this")
+        list.forEach {
+            str.append("\n ${it.toString()} \n")
         }
+
+
+
+        findViewById<TextView>(R.id.tvResult).text = str
     }
 
 
-
-}
-
-interface BaseDao<T>{
-    @Insert
-    open fun insert(campaign: T?){}
-    @Insert @JvmSuppressWildcards
-    fun insertAll(campaigns: List<T?>?)
-    fun deleteAll()
-    fun delete(id2: String)
-    fun getAll(): List<T>
-    @Query("select * from TestModel1 where id =:id2")
-    fun get(id2: String): T
-
-}
-
-@Dao
-interface TestDao: BaseDao<TestModel1> {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    override fun insert(campaign: TestModel1?)
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    override fun insertAll(campaigns: List<TestModel1?>?)
-
-    @Query("DELETE FROM TestModel1")
-    override fun deleteAll()
-
-    @Query("select * from TestModel1")
-    override fun getAll(): List<TestModel1>
-
-    @Query("DELETE FROM TestModel1 where id=:id")
-    override fun delete(id: String)
-
-
-}
-
-@Dao
-interface TestDao2: BaseDao<TestModel2> {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    override fun insert(campaign: TestModel2?)
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    override fun insertAll(campaigns: List<TestModel2?>?)
-
-    @Query("DELETE FROM TestModel2")
-    override fun deleteAll()
-
-    @Query("select * from TestModel2")
-    override fun getAll(): List<TestModel2>
-
-    @Query("select * from TestModel2 where id =:id2")
-    override fun get(id2: String): TestModel2
-
-    @Query("DELETE FROM TestModel2 where id=:id")
-    override fun delete(id: String)
 }
 
 
-
-
-
-
-fun getTestObject() = TestModel1(getCalenderString(), "TestObject1 description")
-fun getTestObject2() = TestModel2(getCalenderString(), "TestObject2 description")
 
 fun getCalenderString() = Calendar.getInstance().timeInMillis.toString()
 
 fun handler(function: () -> Unit) {
-    val mExecutorService = Executors.newSingleThreadExecutor();
-    mExecutorService.execute {
+
+    CoroutineScope(Dispatchers.IO).launch {
         function()
+    }
+
+//    Executor.mExecutorService.execute {
+//        function()
+//    }
+//    Executor.handler { function() }
+
+}
+
+object Executor{
+    val thread = thread {
+
+    }
+    val mExecutorService = Executors.newSingleThreadExecutor();
+
+    fun handler(function: () -> Unit) {
+        thread {
+            function()
+        }
     }
 }
 
