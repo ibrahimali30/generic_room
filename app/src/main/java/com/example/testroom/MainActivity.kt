@@ -14,6 +14,7 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.lang.StringBuilder
 import java.util.*
@@ -24,27 +25,23 @@ val TAG = "TAGTAG"
 
 class MainActivity : AppCompatActivity() {
 
-    object RealmSingeleton{
-        val config by lazy {
-            RealmConfiguration.Builder()
-                .allowQueriesOnUiThread(true)
-                .allowWritesOnUiThread(true)
-                .build()
-        }
-        val realm = Realm.getInstance(config)
-    }
+    lateinit var provider: BaseLocalDataSource
+
 
 
 //    val className = TestModel1::class.java
     val className = TestModel2Realm::class.java
 
+    private fun initProvider() = handler {
+        provider = RealmProvider(RealmSingeleton.realm)
+//        provider = RoomProvider()
+    }
 
-    lateinit var provider: BaseLocalDataSource
 
 //    fun getTestObject2Realm() = TestModel1(getCalenderString(), "TestObject1 description")
-    fun getTestObject2() = TestModel2(getCalenderString(), "TestObject2 description")
 fun getTestObject2Realm() = TestModel2Realm( "TestObject2 description")
 //fun getTestObject2Realm() = Frog("name",1,species = "species",owner = "owner")
+fun getTestObject2() = TestModel2(getCalenderString(), "TestObject2 description")
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,54 +50,12 @@ fun getTestObject2Realm() = TestModel2Realm( "TestObject2 description")
         TestDatabaseInstance.init(this)
         Realm.init(getApplicationContext());
 
-        handler {
-            provider  = RealmProvider(RealmSingeleton.realm)
-//            provider  = RoomProvider()
-        }
-
-//        RealmTest(provider)
-
-//        insertModel1()
-//        testGetAllModel1()
-//        testGet(id = "262efa34-0bdf-4ffa-a22c-ec72bb3c6871")
-
+        initProvider()
 
     }
 
 
-    private fun testGetAllModel1() {
-        handler {
-            val list = provider.getAll(className)
-            list
-            Log.d(TAG, "onCreate: provider.getAll() list1 ${list.toString()}")
-        }
-    }
 
-    private fun testGet(id: String) {
-        handler {
-            val v =  provider.get(className, id)
-            Log.d(TAG, "onCreate: provider.get ${v.toString()}")
-        }
-    }
-
-
-    private fun insertModel1() {
-        val clazz = className
-        handler {
-//            val provider = RealmProvider(realm)
-            provider.apply {
-deleteAll(clazz)
-return@handler
-                insert(clazz, getTestObject2Realm())
-                insert(clazz, getTestObject2Realm())
-                insert(clazz, getTestObject2Realm())
-                insert(clazz, getTestObject2Realm())
-                insert(clazz, getTestObject2Realm())
-                insert(clazz, getTestObject2Realm())
-                insert(clazz, getTestObject2Realm())
-            }
-        }
-    }
 
     fun insert(view: View) = handler {
         provider.insert(className, getTestObject2Realm())
@@ -115,6 +70,7 @@ return@handler
         val str = StringBuilder()
 
         list.forEach {
+            Log.d(TAG, "getAll:forEach ${it.id} ")
             str.append("\n ${it.toString()} \n")
         }
 
@@ -132,7 +88,7 @@ fun getCalenderString() = Calendar.getInstance().timeInMillis.toString()
 
 fun handler(function: () -> Unit) {
 
-    CoroutineScope(Dispatchers.IO).launch {
+    GlobalScope.launch {
         function()
     }
 
@@ -144,6 +100,7 @@ fun handler(function: () -> Unit) {
 }
 
 object Executor{
+    val job = CoroutineScope(Dispatchers.IO)
     val thread = thread {
 
     }
@@ -154,5 +111,15 @@ object Executor{
             function()
         }
     }
+}
+
+object RealmSingeleton{
+    val config by lazy {
+        RealmConfiguration.Builder()
+            .allowQueriesOnUiThread(true)
+            .allowWritesOnUiThread(true)
+            .build()
+    }
+    val realm = Realm.getInstance(config)
 }
 

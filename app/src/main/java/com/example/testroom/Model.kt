@@ -7,13 +7,14 @@ import java.util.*
 
 
 @Entity
- class TestModel1 (
+abstract class TestModel1 (
     @PrimaryKey
     var id: String = "",
-    var description: String =  ""
+    var description: String =  "",
+    var name: String =  "name name"
 
 
-)
+): RealmObject()
 
 @Entity
 class TestModel2 (
@@ -34,7 +35,11 @@ open class TestModel2Realm (
     var id: String = UUID.randomUUID().toString()
 
 
-): RealmObject()
+): RealmObject() {
+    fun asObject(): TestModel2Realm {
+        return this
+    }
+}
 
 open class Frog(var name: String = "",
                 var id: Int = 0,
