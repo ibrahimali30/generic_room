@@ -7,14 +7,14 @@ import java.util.*
 
 
 @Entity
-abstract class TestModel1 (
+class TestModel1 (
     @PrimaryKey
-    var id: String = "",
+    var id: String = UUID.randomUUID().toString(),
     var description: String =  "",
     var name: String =  "name name"
 
 
-): RealmObject()
+)
 
 @Entity
 class TestModel2 (
